@@ -41,6 +41,7 @@ DEPENDENCIES
   gmp
   rspec
   rubocop
+  ruby-progressbar
 
 RUBY VERSION
    ruby 2.4.1p111

@@ -27,17 +27,7 @@ class CounterSystem
     raise 'You need to implement query in subclasses of CounterSystem'
   end
 
-  def self.measure(a:, b:, stream:) # rubocop:disable Metrics/AbcSize
-    counter = new(a: a, b: b)
-    stream.each { |item| counter.insert(item) }
-
-    stats = stream.each_with_object(Hash.new(0)) { |item, s| s[item] += 1 }
-    stats.keys.sort.each do |item|
-      puts <<~TEXT.tr("\n", ' ')
-        Item #{item} is in the stream #{stats[item]} times, counted
-        #{counter.query(item)} times. Error rate:
-        #{(counter.query(item) - stats[item]).abs / item}
-      TEXT
-    end
+  def get_values(queries)
+    queries.map { |i| query(i) }
   end
 end
