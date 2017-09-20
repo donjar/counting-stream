@@ -1,9 +1,12 @@
+# frozen_string_literal: true
+
 require_relative 'counter_system'
-require_relative 'helpers/array_median'
+require_relative '../helpers/array_median'
+Array.include ArrayMedian
 
 # The query method in this class finds the median of all corresponding boxes.
 class MedianCounterSystem < CounterSystem
-  def query(_num)
-    @hash_functions.map.with_index { |hf, i| @counters[i][hf.hash(i)] }.median
+  def query(num)
+    @hash_functions.map { |hf| @counters[hf.id][hf.hash(num)] }.median
   end
 end

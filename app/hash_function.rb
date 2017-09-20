@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'gmp'
 
 # This function hashes numbers to [0, range_size]. You can set the ID to
@@ -7,8 +9,10 @@ class HashFunction
   A_SEED = 5234
   B_SEED = 7744
 
+  attr_accessor :id
+
   def initialize(range_size:, id:)
-    @i = id
+    @id = id
     @m = GMP::Z.new(range_size - 1)
 
     loop do
@@ -16,6 +20,8 @@ class HashFunction
       break if @p.probab_prime? == 2 # means confirm prime
       @p.nextprime!
     end
+
+    initialize_a_and_b
   end
 
   def hash(num)
@@ -24,11 +30,11 @@ class HashFunction
 
   private def initialize_a_and_b
     a_ran = GMP::RandState.new(A_SEED)
-    @i.times { a_ran.urandomm(@p) } # advance i times
+    @id.times { a_ran.urandomm(@p) } # advance i times
     @a = a_ran.urandomm(@p)
 
     b_ran = GMP::RandState.new(B_SEED)
-    @i.times { a_ran.urandomm(@p) } # advance i times
+    @id.times { a_ran.urandomm(@p) } # advance i times
     @b = b_ran.urandomm(@p)
   end
 end

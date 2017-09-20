@@ -1,4 +1,6 @@
-require_relative 'hash_function'
+# frozen_string_literal: true
+
+require_relative '../hash_function'
 
 # This is the base CounterSystem clsas, providing methods to insert numbers
 # (from a stream) and query them. The querying is to be implemented by its
@@ -23,5 +25,19 @@ class CounterSystem
 
   def query(_num)
     raise 'You need to implement query in subclasses of CounterSystem'
+  end
+
+  def self.measure(a:, b:, stream:) # rubocop:disable Metrics/AbcSize
+    counter = new(a: a, b: b)
+    stream.each { |item| counter.insert(item) }
+
+    stats = stream.each_with_object(Hash.new(0)) { |item, s| s[item] += 1 }
+    stats.keys.sort.each do |item|
+      puts <<~TEXT.tr("\n", ' ')
+        Item #{item} is in the stream #{stats[item]} times, counted
+        #{counter.query(item)} times. Error rate:
+        #{(counter.query(item) - stats[item]).abs / item}
+      TEXT
+    end
   end
 end
