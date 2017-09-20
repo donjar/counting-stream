@@ -34,7 +34,7 @@ end
 
 def reports_with_fixed_space(folder:, size:, stream:)
   pb = ProgressBar.create(total: size)
-  size.times.each do |a|
+  1.upto(size) do |a|
     pb.increment
     next if a.zero?
     b = size / a
