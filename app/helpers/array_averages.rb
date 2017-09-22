@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Adds the median method to arrays
-module ArrayMedian
+module ArrayAverages
   def median
     sorted = sort
     len = length
@@ -10,5 +10,9 @@ module ArrayMedian
     else
       (sorted[len / 2 - 1] + sorted[len / 2]) / 2.0
     end
+  end
+
+  def mean
+    sum / length
   end
 end

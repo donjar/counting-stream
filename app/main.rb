@@ -49,7 +49,8 @@ def generate_reports(name:, size:, stream:)
 
       file = "#{folder}/a#{a}_b#{b}.csv"
       CSV.open(file, 'wb') do |csv|
-        csv << ['a', a, 'b', b, 'count', stream.length, 'unique', stats.keys.length]
+        csv << ['a', a, 'b', b, 'count', stream.length, 'unique',
+                stats.keys.length]
         csv << ['keys'] + keys
         csv << ['values'] + stats.values
         csv << ['median'] + median.get_values(stats.keys)
@@ -64,15 +65,15 @@ def generate_reports(name:, size:, stream:)
 end
 
 def uniform_stream(ints:, total:)
-  total.times.map { Random.rand(ints) }
+  Array.new(total) { Random.rand(ints) }
 end
 
 def exponential_stream(ints:, total:)
-  total.times.map { 50 - Math.log(Random.rand(2 ** 50), 2).ceil }
+  Array.new(total) { ints - Math.log(Random.rand(2**50), 2).ceil }
 end
 
-def uniform_stream(ints:, total:)
-  total.times.map { 50.times.map { Random.rand(2) }.sum }
+def binomial_stream(ints:, total:)
+  Array.new(total) { Array.new(ints) { Random.rand(2) }.sum }
 end
 
 def stream_to_ints(stream)

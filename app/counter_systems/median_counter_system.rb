@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'counter_system'
-require_relative '../helpers/array_median'
+require_relative '../helpers/array_averages'
 Array.include ArrayMedian
 
 # The query method in this class finds the median of all corresponding boxes.

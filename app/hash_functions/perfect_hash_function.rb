@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative './hash_function.rb'
 
 # Every time this hash function faces a new element, it will generate a random
