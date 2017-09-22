@@ -13,6 +13,6 @@ module ArrayAverages
   end
 
   def mean
-    sum / length
+    sum / length.to_f
   end
 end

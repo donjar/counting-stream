@@ -4,22 +4,26 @@ require_relative 'counter_systems/median_counter_system.rb'
 require_relative 'counter_systems/minimum_counter_system.rb'
 require_relative 'counter_systems/noise_subtracting_counter_system.rb'
 
+require_relative 'hash_functions/perfect_hash_function.rb'
+require_relative 'hash_functions/prime_hash_function.rb'
+
 require 'csv'
 require 'fileutils'
 require 'ruby-progressbar'
 
-def feed_counters(a:, b:, stream:)
-  median = MedianCounterSystem.new(a: a, b: b)
-  noise = NoiseSubstractingCounterSystem.new(a: a, b: b)
-  minimum = MinimumCounterSystem.new(a: a, b: b)
+def feed_counters(a:, b:, stream:, hash_function:)
+  median = MedianCounterSystem.new(a: a, b: b, hash_function: hash_function)
+  noise = NoiseSubstractingCounterSystem.new(a: a, b: b,
+                                             hash_function: hash_function)
+  minimum = MinimumCounterSystem.new(a: a, b: b, hash_function: hash_function)
 
   [median, noise, minimum].each do |c|
     stream.each { |i| c.insert(i) }
   end
 end
 
-def generate_reports(name:, size:, stream:)
-  pb = ProgressBar.create(total: 9 * (2 * Math.sqrt(size) - 2))
+def generate_reports(name:, size:, stream:, hash_function:)
+  pb = ProgressBar.create(total: 9 * (2 * Math.sqrt(size) - 2).to_i)
 
   stats = stream.each_with_object(Hash.new(0)) { |i, s| s[i] += 1 }.sort.to_h
 
@@ -34,15 +38,16 @@ def generate_reports(name:, size:, stream:)
       next if a != 1 && b == size / (a + 1) # suboptimal
       next if b == 1 # error
 
-      median, noise, minimum = feed_counters(a: a, b: b, stream: stream)
-      pb += 3
+      median, noise, minimum = feed_counters(a: a, b: b, stream: stream,
+                                             hash_function: hash_function)
+      3.times { pb.increment }
 
       keys = stats.keys
-      median_err = keys.map { |k| (median.query(k) - stats[k]).abs }.sum / size.to_f
+      median_err = keys.map { |k| (median.query(k) - stats[k]).abs }.mean
       pb.increment
-      noise_err = keys.map { |k| (noise.query(k) - stats[k]).abs }.sum / size.to_f
+      noise_err = keys.map { |k| (noise.query(k) - stats[k]).abs }.mean
       pb.increment
-      minimum_err = keys.map { |k| (minimum.query(k) - stats[k]).abs }.sum / size.to_f
+      minimum_err = keys.map { |k| (minimum.query(k) - stats[k]).abs }.mean
       pb.increment
 
       summary_csv << [a, b, median_err, noise_err, minimum_err]

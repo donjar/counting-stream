@@ -4,7 +4,7 @@ require_relative './hash_function.rb'
 
 # Every time this hash function faces a new element, it will generate a random
 # integer for it.
-class PerfectHashFunction
+class PerfectHashFunction < HashFunction
   def initialize(range_size:, id:)
     @id = id
     @range = range_size
@@ -12,6 +12,6 @@ class PerfectHashFunction
   end
 
   def hash(num)
-    @dict[num] ||= Random.rand(range_size)
+    @dict[num] ||= Random.rand(@range)
   end
 end
