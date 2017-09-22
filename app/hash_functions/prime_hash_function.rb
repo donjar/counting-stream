@@ -1,15 +1,14 @@
 # frozen_string_literal: true
 
 require 'gmp'
+require_relative './hash_function'
 
 # This function hashes numbers to [0, range_size]. You can set the ID to
 # tweak the parameters.
-class HashFunction
+class PrimeHashFunction < HashFunction
   MULTIPLY_CONSTANT = 7
   A_SEED = 5234
   B_SEED = 7744
-
-  attr_accessor :id
 
   def initialize(range_size:, id:)
     @id = id

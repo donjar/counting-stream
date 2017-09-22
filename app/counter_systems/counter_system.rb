@@ -1,15 +1,13 @@
 # frozen_string_literal: true
 
-require_relative '../hash_function'
-
 # This is the base CounterSystem clsas, providing methods to insert numbers
 # (from a stream) and query them. The querying is to be implemented by its
 # subclasses.
 class CounterSystem
-  def initialize(a:, b:)
+  def initialize(a:, b:, hash_function:)
     @counters = Array.new(a) { Array.new(b).fill(0) }
     @hash_functions = Array.new(a) do |idx|
-      HashFunction.new(range_size: b, id: idx)
+      hash_function.new(range_size: b, id: idx)
     end
   end
 
