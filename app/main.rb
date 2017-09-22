@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
-Dir['counter_systems/*.rb'].each { |f| require_relative f }
+require_relative 'counter_systems/median_counter_system.rb'
+require_relative 'counter_systems/minimum_counter_system.rb'
+require_relative 'counter_systems/noise_subtracting_counter_system.rb'
 
 require 'csv'
 require 'fileutils'
@@ -16,33 +18,75 @@ def feed_counters(a:, b:, stream:)
   end
 end
 
-# rubocop:disable Metrics/AbcSize, Metrics/MethodLength
-def generate_report(file:, a:, b:, stream:)
-  stats = stream.each_with_object(Hash.new(0)) { |i, s| s[i] += 1 }.sort.to_h
-  median, noise, minimum = feed_counters(a: a, b: b, stream: stream)
+def generate_reports(name:, size:, stream:)
+  pb = ProgressBar.create(total: 9 * (2 * Math.sqrt(size) - 2))
 
-  CSV.open(file, 'wb') do |csv|
-    csv << ['a', a, 'b', b, 'count', stream.length, 'unique', stats.keys.length]
-    csv << ['keys'] + stats.keys
-    csv << ['values'] + stats.values
-    csv << ['median'] + median.get_values(stats.keys)
-    csv << ['noise'] + noise.get_values(stats.keys)
-    csv << ['minimum'] + minimum.get_values(stats.keys)
+  stats = stream.each_with_object(Hash.new(0)) { |i, s| s[i] += 1 }.sort.to_h
+
+  folder = "res/#{name}"
+  FileUtils.mkdir_p folder
+
+  CSV.open("res/#{name}.csv", 'wb') do |summary_csv|
+    summary_csv << ['total', stream.length]
+    summary_csv << %w[a b median noise minimum]
+    1.upto(size) do |a|
+      b = size / a
+      next if a != 1 && b == size / (a + 1) # suboptimal
+      next if b == 1 # error
+
+      median, noise, minimum = feed_counters(a: a, b: b, stream: stream)
+      pb += 3
+
+      keys = stats.keys
+      median_err = keys.map { |k| (median.query(k) - stats[k]).abs }.sum / size.to_f
+      pb.increment
+      noise_err = keys.map { |k| (noise.query(k) - stats[k]).abs }.sum / size.to_f
+      pb.increment
+      minimum_err = keys.map { |k| (minimum.query(k) - stats[k]).abs }.sum / size.to_f
+      pb.increment
+
+      summary_csv << [a, b, median_err, noise_err, minimum_err]
+
+      file = "#{folder}/a#{a}_b#{b}.csv"
+      CSV.open(file, 'wb') do |csv|
+        csv << ['a', a, 'b', b, 'count', stream.length, 'unique', stats.keys.length]
+        csv << ['keys'] + keys
+        csv << ['values'] + stats.values
+        csv << ['median'] + median.get_values(stats.keys)
+        pb.increment
+        csv << ['noise'] + noise.get_values(stats.keys)
+        pb.increment
+        csv << ['minimum'] + minimum.get_values(stats.keys)
+        pb.increment
+      end
+    end
   end
 end
-# rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
-def reports_with_fixed_space(folder:, size:, stream:)
-  pb = ProgressBar.create(total: size)
-  1.upto(size) do |a|
-    pb.increment
-    next if a.zero?
-    b = size / a
-    next if a != 1 && b == size / (a + 1) # suboptimal
+def uniform_stream(ints:, total:)
+  total.times.map { Random.rand(ints) }
+end
 
-    long_folder = "res/#{folder}"
-    FileUtils.mkdir_p long_folder
-    filename = "#{long_folder}/a#{a}_b#{b}.csv"
-    generate_report(file: filename, a: a, b: b, stream: stream)
+def exponential_stream(ints:, total:)
+  total.times.map { 50 - Math.log(Random.rand(2 ** 50), 2).ceil }
+end
+
+def uniform_stream(ints:, total:)
+  total.times.map { 50.times.map { Random.rand(2) }.sum }
+end
+
+def stream_to_ints(stream)
+  hash = {}
+  count = 0
+  stream.map do |item|
+    if hash[item].nil?
+      hash[item] = count
+      count += 1
+    end
+    hash[item]
   end
+end
+
+def text_to_words(text)
+  text.gsub(/\s+/, ' ').gsub(/[^a-zA-Z ]/, ' ').downcase.split(' ')
 end
